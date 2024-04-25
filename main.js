@@ -100,7 +100,7 @@ async function initBot(bot){
     }
 
     var taskTimeout = setTimeout(()=>{
-        if(currentTask == TASK.RETURN_HOME || currentTask == TASK.BAKKIE_DOEN) return;
+        if(currentTask == TASK.RETURN_HOME) return;
 
         console.log(`[${bot.username}] WATCHDOG TIMEOUT [@Task(${currentTask})]`)
         runLoop = false;
