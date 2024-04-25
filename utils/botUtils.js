@@ -166,6 +166,15 @@ function createBotInstance({ config, username, password, id, autoRespawn = true}
       })
       bot.on('error', (err) => reject(err))
       if(autoRespawn) bot.on('death ', () => bot.respawn());
+
+
+      //on bot leave, kick etc kill process
+      bot.on('end', (reason) => {
+        console.log(`Bot ${id} disconnected: ${reason}`)
+        process.exit(1)
+      })
+
+      
     }, config.interval * id)
   })
 }
