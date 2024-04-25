@@ -10,7 +10,8 @@ const tasks = {
   DROP_ITEMS: 1,
   FARM_CROPS: 2,
   SEED_CROPS: 3,
-  RETURN_HOME: 4
+  RETURN_HOME: 4,
+  BAKKIE_DOEN: 5
 }
 
 function checkInventoryFull(bot){
@@ -18,7 +19,7 @@ function checkInventoryFull(bot){
 }
 
 
-function findGrownWheat(botInstance, maxDistance = 64){
+function findGrownWheat(botInstance, maxDistance = 32){
   return new Promise(res=>{
     const mcData = require('minecraft-data')(botInstance.version)
 
@@ -38,7 +39,7 @@ function findGrownWheat(botInstance, maxDistance = 64){
   })
 }
 
-function lookForEmptyFarmland(botInstance, maxDistance = 64){
+function lookForEmptyFarmland(botInstance, maxDistance = 32){
   const mcData = require('minecraft-data')(botInstance.version)
 
   const result = botInstance.findBlocks({
@@ -88,9 +89,14 @@ function walkToRandomNearLocation(botInstance, {allowSprint = false}){
     const box1 = {x: -6, z: -169}
     const box2 = {x: 88, z: -213}
 
-    x = Math.floor(Math.random() * (box2.x - box1.x + 1) + box1.x)
-    z = Math.floor(Math.random() * (box2.z - box1.z + 1) + box1.z)
+    //max distance is 8 blocks
+    x += Math.floor(Math.random() * 4) - 4
+    z += Math.floor(Math.random() * 4) - 4
 
+    if(x < box1.x) x = box1.x
+    if(x > box2.x) x = box2.x
+    if(z < box2.z) z = box2.z
+    if(z > box1.z) z = box1.z
 
     await walkToLocation(botInstance, {x, y, z, allowSprint})
 
@@ -141,7 +147,8 @@ function createBotInstance({ config, username, password, id, autoRespawn = true}
         auth: "offline",
         // auth: password != '' ? "microsoft" : "offline",
         port: config.port,
-        version: '1.20.1'
+        version: '1.20.1',
+        keepAlive: true,
       })
       bot.loadPlugin(pathfinder)
 
@@ -187,14 +194,6 @@ function walkToLocation(bot, {x, y, z, range = 1, allowSprint = false}){
       bot.on('goal_reached', () => {
           res(false)
       })
-
-      bot.on("chat", (username, message) => {
-        if(message == 'exit'){
-          process.exit(1)
-          res(false)
-        }
-      });
-
   })
 }
 
