@@ -191,6 +191,12 @@ async function initBot(bot){
         }
 
         const seeds = bot.inventory.findInventoryItem('wheat_seeds')
+        if(seeds == null) {
+          console.log(`[${bot.username}] TASK FAILED: SEED_CROPS (${farmland.x}, ${farmland.y}, ${farmland.z})`)
+          await sendControlMessage('RELEASEBLOCK', {x: farmland.x, y: farmland.y, z: farmland.z, username: bot.username})
+          currentTask = TASK.IDLE;
+          break;
+        }
         await bot.equip(seeds, 'hand');
 
         try{
