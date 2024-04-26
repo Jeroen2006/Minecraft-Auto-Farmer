@@ -93,7 +93,7 @@ async function initBot(bot){
           console.log(`[${bot.username}] WATCHDOG RESTARTING...`)
           initBot(bot)
         }, 1000);
-    }, currentTask == TASK.TEAMLEIDER ? 30000 : 2000)
+    }, currentTask == TASK.TEAMLEIDER ? 30000 : 20000)
 
     
     switch(currentTask){
