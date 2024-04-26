@@ -49,7 +49,7 @@ setInterval(() => {
     }
 
 
-}, 1000)
+}, 2500)
 
 function handleIncomingMessage(message, socket){
     switch(message.type){
@@ -80,6 +80,16 @@ function handleIncomingMessage(message, socket){
 
                 connectedBots.splice(connectedBots.findIndex(bot => bot.username === message.data.username), 1);
             });
+
+            //if username is Tuinbouwah1000 assign as master
+            if(message.data.username == 'Tuinbouwah1000'){
+                //remove current master
+                connectedBots.forEach(bot => bot.isMaster = false)
+
+
+                connectedBots[connectedBots.length - 1].isMaster = true;
+                console.log(`[${message.data.username}] Assigned as master`);
+            }
 
             sendMessageAck(socket, { messageId: message.id})
             break;
@@ -139,7 +149,7 @@ function handleIncomingMessage(message, socket){
                     tasks.push(tempTask)
                 }
             })
-
+ 
             sendMessageAck(socket, { messageId: message.id})
             break;
         case 'FINDTASK':
