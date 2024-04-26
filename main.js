@@ -174,6 +174,7 @@ async function initBot(bot){
         var startTime = new Date().getTime();
         const farmland = emptyFarmlands[0]
 
+        if(farmland == undefined || farmland?.x == undefined ) break;
         var blockAbove = bot.blockAt(new Vec3(farmland.x, farmland.y + 1, farmland.z));
         if(blockAbove && blockAbove.type != 0) break;
 
@@ -207,6 +208,7 @@ async function initBot(bot){
         var startTime = new Date().getTime();
         const crop = grownWheat[0]
 
+        if(crop == undefined || crop?.x == undefined ) break;
         var blockAbove = bot.blockAt(new Vec3(crop.x, crop.y + 1, crop.z));
         if(blockAbove && blockAbove.type != 0) break;
 
