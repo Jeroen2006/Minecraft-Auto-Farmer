@@ -2,6 +2,7 @@ var net = require('net');
 
 var controlSockets = {};
 var sendMessages = [];
+var isMaster = false;
 
 function createControlSocket(bot, {host, port}){
     return new Promise((resolve, reject) => {
@@ -103,9 +104,25 @@ function controlSocketDataReceivedHandler(data){
             delete sendMessages[message.data.messageId]
         }
     }
+
+    if(message.type == "MASTER"){
+        const isMaster2 = message.data.isMaster;
+        const masterName = message.data.username;
+
+        if(isMaster == false && isMaster2 == true){
+            isMaster = true;
+        } else if(isMaster == true && isMaster2 == false){
+            isMaster = false;
+        }
+    }
+}
+
+function isMasterFunc(){
+    return isMaster;
 }
 
 module.exports = {
     createControlSocket,
-    sendControlMessage
+    sendControlMessage,
+    isMaster: isMasterFunc
 }

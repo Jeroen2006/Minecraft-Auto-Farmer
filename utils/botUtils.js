@@ -11,7 +11,8 @@ const tasks = {
   FARM_CROPS: 2,
   SEED_CROPS: 3,
   RETURN_HOME: 4,
-  BAKKIE_DOEN: 5
+  BAKKIE_DOEN: 5,
+  TEAMLEIDER: 6
 }
 
 function checkInventoryFull(bot){
@@ -19,7 +20,7 @@ function checkInventoryFull(bot){
 }
 
 
-function findGrownWheat(botInstance, maxDistance = 32){
+function findGrownWheat(botInstance, maxDistance = 32, count = 25){
   return new Promise(res=>{
     const mcData = require('minecraft-data')(botInstance.version)
 
@@ -28,7 +29,7 @@ function findGrownWheat(botInstance, maxDistance = 32){
             return block.type == mcData.blocksByName.wheat.id && block._properties.age >= 7
         },
         maxDistance: maxDistance,
-        count: 25
+        count: count,
       });
 
     //shuffle result array
@@ -39,7 +40,7 @@ function findGrownWheat(botInstance, maxDistance = 32){
   })
 }
 
-function lookForEmptyFarmland(botInstance, maxDistance = 32){
+function lookForEmptyFarmland(botInstance, maxDistance = 32, count = 25){
   const mcData = require('minecraft-data')(botInstance.version)
 
   const result = botInstance.findBlocks({
@@ -49,7 +50,7 @@ function lookForEmptyFarmland(botInstance, maxDistance = 32){
       },
       matching: botInstance.registry.blocksByName.farmland.id,
       maxDistance: maxDistance,
-      count: 25
+      count: count,
     });
 
     //shuffle result array
