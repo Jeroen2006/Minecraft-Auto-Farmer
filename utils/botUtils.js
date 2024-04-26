@@ -1,7 +1,6 @@
 const mineflayer = require('mineflayer')
 const { pathfinder, Movements, goals: { GoalNear, GoalXZ } } = require('mineflayer-pathfinder')
 var Vec3 = require('vec3').Vec3;
-const inventoryViewer = require('mineflayer-web-inventory')
 const delay = require('./utils').delay
 
 

@@ -12,7 +12,6 @@
     "mineflayer": "^4.20.1",
     "mineflayer-blockfinder": "^0.0.7",
     "mineflayer-pathfinder": "^2.4.5",
-    "mineflayer-web-inventory": "^1.8.5",
     "nodemon": "^3.1.0",
     "prismarine-viewer": "^1.28.0"
   },
