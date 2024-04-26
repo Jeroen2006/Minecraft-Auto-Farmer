@@ -83,8 +83,7 @@ function handleIncomingMessage(message, socket){
 
             sendMessageAck(socket, { messageId: message.id})
             break;
-        case 'CLAIMBLOCK':
-            break; //niet nodig ivm FINDBLOCK
+        case 'CLAIMBLOCK': //niet nodig ivm FINDBLOCK
             console.log(`[${message.data.username}] Claiming block ${message.data.x}, ${message.data.y}, ${message.data.z}`)
 
             claimedBlocks.push({x: message.data.x, y: message.data.y, z: message.data.z, claimTime: new Date().getTime(), username: message.data.username})
