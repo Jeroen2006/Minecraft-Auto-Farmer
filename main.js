@@ -159,7 +159,7 @@ async function initBot(bot){
         await bot.look(1.047198, 0);
         await dropUnneededItems(bot);
 
-        await delay(5000)
+        await delay(10000)
 
         console.log(`[${bot.username}] TASK COMPLETE: DROP_ITEMS`)
         currentTask = TASK.RETURN_HOME;
@@ -173,10 +173,21 @@ async function initBot(bot){
       case TASK.SEED_CROPS:
         var startTime = new Date().getTime();
         const farmland = emptyFarmlands[0]
+
+        var blockAbove = bot.blockAt(new Vec3(farmland.x, farmland.y + 1, farmland.z));
+        if(blockAbove && blockAbove.type != 0) break;
+
         await sendControlMessage('CLAIMBLOCK', {x: farmland.x, y: farmland.y, z: farmland.z, username: bot.username})
 
         console.log(`[${bot.username}] TASK: SEED_CROPS (${farmland.x}, ${farmland.y}, ${farmland.z})`)
         await walkToLocation(bot, {x: farmland.x, y: farmland.y, z: farmland.z, range: 0})
+
+        var blockAbove = bot.blockAt(new Vec3(farmland.x, farmland.y + 1, farmland.z));
+        if(blockAbove && blockAbove.type != 0) {
+          await sendControlMessage('RELEASEBLOCK', {x: farmland.x, y: farmland.y, z: farmland.z, username: bot.username})
+          console.log(`[${bot.username}] TASK FAILED: SEED_CROPS (${farmland.x}, ${farmland.y}, ${farmland.z})`)
+          break;
+        }
 
         const seeds = bot.inventory.findInventoryItem('wheat_seeds')
         await bot.equip(seeds, 'hand');
@@ -195,6 +206,10 @@ async function initBot(bot){
       case TASK.FARM_CROPS:
         var startTime = new Date().getTime();
         const crop = grownWheat[0]
+
+        var blockAbove = bot.blockAt(new Vec3(crop.x, crop.y + 1, crop.z));
+        if(blockAbove && blockAbove.type != 0) break;
+
         await sendControlMessage('CLAIMBLOCK', {x: crop.x, y: crop.y, z: crop.z, username: bot.username})
         console.log(`[${bot.username}] TASK: FARM_CROPS (${crop.x}, ${crop.y}, ${crop.z})`)
         
