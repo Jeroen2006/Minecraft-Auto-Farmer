@@ -99,6 +99,9 @@ function handleIncomingMessage(message, socket){
             );
             claimedBlocks.splice(indexToDelete, 1);
 
+            //remove task if block is released
+            tasks = tasks.filter(task => task.data.x != message.data.x || task.data.y != message.data.y || task.data.z != message.data.z)
+
             sendMessageAck(socket, { messageId: message.id})
             break;
 
@@ -131,7 +134,7 @@ function handleIncomingMessage(message, socket){
             var tempTasks = [];
             message.data.grownWheat.forEach(block => { tempTasks.push({type: 'FARM_CROPS', data: block, assigned: null}) });
             message.data.emptyFarmlands.forEach(block => { tempTasks.push({type: 'SEED_CROPS', data: block, assigned: null }) });
-            tasks = tasks.filter(task => tempTasks.find(tempTask => tempTask.data.x == task.data.x && tempTask.data.y == task.data.y && tempTask.data.z == task.data.z))
+            //tasks = tasks.filter(task => tempTasks.find(tempTask => tempTask.data.x == task.data.x && tempTask.data.y == task.data.y && tempTask.data.z == task.data.z))
             tempTasks.forEach(tempTask => {
                 if(!tasks.find(task => task.data.x == tempTask.data.x && task.data.y == tempTask.data.y && task.data.z == tempTask.data.z)){
                     tasks.push(tempTask)
@@ -143,8 +146,11 @@ function handleIncomingMessage(message, socket){
         case 'FINDTASK':
             console.log(`[${message.data.username}] Finding task`)
 
-            const tasksList = tasks.filter(task => task.assigned == null)
+            var tasksList = tasks.filter(task => task.assigned == null)
             const botPosition = connectedBots.find(bot => bot.username == message.data.username).pos;
+
+            //remove tasks on blocks that are claimed from tasksList
+            tasksList = tasksList.filter(task => isUnclaimedBlock(task.data.x, task.data.y, task.data.z))
 
             const closestTask = tasksList.reduce((prev, curr) => {
                 const prevDistance = Math.sqrt(Math.pow(prev.data.x - botPosition.x, 2) + Math.pow(prev.data.y - botPosition.y, 2) + Math.pow(prev.data.z - botPosition.z, 2))

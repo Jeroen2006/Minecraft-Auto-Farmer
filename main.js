@@ -93,7 +93,7 @@ async function initBot(bot){
           console.log(`[${bot.username}] WATCHDOG RESTARTING...`)
           initBot(bot)
         }, 1000);
-    }, currentTask == TASK.TEAMLEIDER ? 30000 : 20000)
+    }, currentTask == TASK.TEAMLEIDER ? 60000 : 20000)
 
     
     switch(currentTask){
@@ -173,7 +173,7 @@ async function initBot(bot){
       case TASK.SEED_CROPS:
         var startTime = new Date().getTime();
         const farmland = emptyFarmlands[0]
-        //await sendControlMessage('CLAIMBLOCK', {x: farmland.x, y: farmland.y, z: farmland.z, username: bot.username})
+        await sendControlMessage('CLAIMBLOCK', {x: farmland.x, y: farmland.y, z: farmland.z, username: bot.username})
 
         console.log(`[${bot.username}] TASK: SEED_CROPS (${farmland.x}, ${farmland.y}, ${farmland.z})`)
         await walkToLocation(bot, {x: farmland.x, y: farmland.y, z: farmland.z, range: 0})
@@ -195,7 +195,7 @@ async function initBot(bot){
       case TASK.FARM_CROPS:
         var startTime = new Date().getTime();
         const crop = grownWheat[0]
-        //await sendControlMessage('CLAIMBLOCK', {x: crop.x, y: crop.y, z: crop.z, username: bot.username})
+        await sendControlMessage('CLAIMBLOCK', {x: crop.x, y: crop.y, z: crop.z, username: bot.username})
         console.log(`[${bot.username}] TASK: FARM_CROPS (${crop.x}, ${crop.y}, ${crop.z})`)
         
         await walkToLocation(bot, {x: crop.x, y: crop.y, z: crop.z, range: 0})
