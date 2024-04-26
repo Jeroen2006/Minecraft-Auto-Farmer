@@ -77,7 +77,7 @@ async function initBot(bot){
 
     }
 
-    if(currentTask == TASK.IDLE){
+    if(currentTask == TASK.IDLE && currentTask != TASK.DROP_ITEMS && currentTask != TASK.BAKKIE_DOEN){
         emptyFarmlands = lookForEmptyFarmland(bot, 128);
         const seeds = bot.inventory.findInventoryItem('wheat_seeds')
 
@@ -197,12 +197,12 @@ async function initBot(bot){
 
         //make bot crouch
         await bot.setControlState('sneak', true);
-        await delay(500)
+        await delay(200)
         await bot.setControlState('sneak', false);
-
-        await delay(7500)
+        await delay(100)
 
         console.log(`[${bot.username}] TASK COMPLETE: IDLE ${new Date().getTime() - startTime}ms`)
+        currentTask = TASK.BAKKIE_DOEN;
         break;
     }
 
