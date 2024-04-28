@@ -30,12 +30,17 @@ async function initBots(){
 
       bot.on("chat", (username, message) => {
         if(message.toLowerCase().includes("bakkie doen")){
-          forceTask = TASK.BAKKIE_DOEN;
-          //bot.chat("Loop ut?")
+          var randomDelay = Math.floor(Math.random() * 10000) + 1000;
+          setTimeout(() => {
+            forceTask = TASK.BAKKIE_DOEN;
+          }, randomDelay)
         }
 
         if(message.toLowerCase().includes("werrekuh")){
-          forceTask = TASK.RETURN_HOME;
+          var randomDelay = Math.floor(Math.random() * 10000) + 1000;
+          setTimeout(() => {
+            forceTask = TASK.RETURN_HOME;
+          }, randomDelay)
         }
 
         if(message == 'exit'){
@@ -153,7 +158,7 @@ async function initBot(bot){
         await walkToLocation(bot, {x: x, z: y})
 
 
-        await delay(1000)
+        await delay(5000)
       break;
       case TASK.DROP_ITEMS:
         console.log(`[${bot.username}] TASK: DROP_ITEMS`)
