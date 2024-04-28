@@ -3,7 +3,6 @@ const { pathfinder, Movements, goals: { GoalNear, GoalXZ } } = require('mineflay
 var Vec3 = require('vec3').Vec3;
 const delay = require('./utils').delay
 
-
 const tasks = {
   IDLE: 0,
   DROP_ITEMS: 1,
@@ -19,13 +18,15 @@ function checkInventoryFull(bot){
 }
 
 
-function findGrownWheat(botInstance, maxDistance = 32, count = 25){
+function findgrownCrops(botInstance, maxDistance = 32, count = 25){
   return new Promise(res=>{
     const mcData = require('minecraft-data')(botInstance.version)
 
+    const { CROP_ITEM } = global.farmConfig
+
     const result = botInstance.findBlocks({
         matching: (block) =>{
-            return block.type == mcData.blocksByName.wheat.id && block._properties.age >= 7
+            return block.type == mcData.blocksByName[CROP_ITEM].id && block._properties.age >= 7
         },
         maxDistance: maxDistance,
         count: count,
@@ -40,31 +41,34 @@ function findGrownWheat(botInstance, maxDistance = 32, count = 25){
 }
 
 function lookForEmptyFarmland(botInstance, maxDistance = 32, count = 25){
-  const mcData = require('minecraft-data')(botInstance.version)
+  return new Promise(res=>{
+    const mcData = require('minecraft-data')(botInstance.version)
 
-  const result = botInstance.findBlocks({
-      useExtraInfo: (block) => {
-          const blockAbove = botInstance.blockAt(block.position.offset(0,1,0))
-          return !blockAbove || blockAbove.type === mcData.blocksByName.air.id
-      },
-      matching: botInstance.registry.blocksByName.farmland.id,
-      maxDistance: maxDistance,
-      count: count,
-    });
+    const result = botInstance.findBlocks({
+        useExtraInfo: (block) => {
+            const blockAbove = botInstance.blockAt(block.position.offset(0,1,0))
+            return !blockAbove || blockAbove.type === mcData.blocksByName.air.id
+        },
+        matching: botInstance.registry.blocksByName.farmland.id,
+        maxDistance: maxDistance,
+        count: count,
+      });
 
-    //shuffle result array
-    // result.sort(() => Math.random() - 0.5);
-
-  return result
+      //shuffle result array
+      // result.sort(() => Math.random() - 0.5);
+      res(result)
+  })
 }
 
-function harvestAndReplaceWheat(botInstance, {x, y, z}){
+function harvestAndReplaceCrop(botInstance, {x, y, z}){
   return new Promise(async res=>{
     const block = botInstance.blockAt(new Vec3(x, y, z))
 
+    const { CROP_ITEM, SEED_ITEM } = global.farmConfig
+
     await botInstance.dig(block, true);
     await delay(500);
-    const seeds = botInstance.inventory.findInventoryItem('wheat_seeds')
+    const seeds = botInstance.inventory.findInventoryItem(SEED_ITEM)
     if(seeds){
       await botInstance.equip(seeds, 'hand');
       try{
@@ -106,21 +110,24 @@ function walkToRandomNearLocation(botInstance, {allowSprint = false}){
 
 function dropUnneededItems(botInstance){
   return new Promise(async res=>{
-    //drop all unneeded items, except 1 stack of wheat seeds and a diamond hoe
-    const itemsToKeep = ['wheat_seeds', 'diamond_hoe']
+
+    const { CROP_ITEM, SEED_ITEM } = global.farmConfig
+
+    //drop all unneeded items, except 1 stack of seeds and a diamond hoe
+    const itemsToKeep = [SEED_ITEM, 'diamond_hoe']
 
     var itemsToDrop = botInstance.inventory.items().filter((item) => {
         return !itemsToKeep.includes(item.name)
     })
 
-    var wheat_seeds = botInstance.inventory.items().filter((item) => {
-        return item.name == 'wheat_seeds'
+    var seeds = botInstance.inventory.items().filter((item) => {
+        return item.name == SEED_ITEM
     })
 
     //remove 1 item from wheat seeds
-    wheat_seeds.pop();
+    seeds.pop();
 
-    itemsToDrop = itemsToDrop.concat(wheat_seeds)
+    itemsToDrop = itemsToDrop.concat(seeds)
 
     for(const item of itemsToDrop){
         await botInstance.tossStack(item)
@@ -131,10 +138,12 @@ function dropUnneededItems(botInstance){
   })
 }
 
-function checkGrownWheat(bot, {x, y, z}) {
+function checkgrownCrops(bot, {x, y, z}) {
   const mcData = require('minecraft-data')(bot.version)
+
+  const { CROP_ITEM, SEED_ITEM } = global.farmConfig
   const block = bot.blockAt(new Vec3(x, y, z))
-  return block.type == mcData.blocksByName.wheat.id && block._properties.age >= 7
+  return block.type == mcData.blocksByName[CROP_ITEM].id && block._properties.age >= 7
 }
 
 function createBotInstance({ config, username, password, id, autoRespawn = true}) {
@@ -210,9 +219,9 @@ module.exports = {
   createBotInstance,
   walkToLocation,
   checkInventoryFull,
-  findGrownWheat,
-  checkGrownWheat,
-  harvestAndReplaceWheat,
+  findgrownCrops,
+  checkgrownCrops,
+  harvestAndReplaceCrop,
   lookForEmptyFarmland,
   walkToRandomNearLocation,
   Vec3,

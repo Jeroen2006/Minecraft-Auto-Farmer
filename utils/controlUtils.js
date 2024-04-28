@@ -103,6 +103,11 @@ function controlSocketDataReceivedHandler(data){
             sendMessages[message.data.messageId].resolve(message.data)
             delete sendMessages[message.data.messageId]
         }
+
+        if(message.data.farmConfig){
+            console.log('Farm config received')
+            global.farmConfig = message.data.farmConfig;
+        }
     }
 
     if(message.type == "MASTER"){

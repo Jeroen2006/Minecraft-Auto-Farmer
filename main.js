@@ -1,4 +1,4 @@
-const { Vec3, createBotInstance, walkToLocation, walkToRandomNearLocation, dropUnneededItems, checkInventoryFull, lookForEmptyFarmland, findGrownWheat, checkGrownWheat, harvestAndReplaceWheat, tasks: TASK, } = require('./utils/botUtils')
+const { Vec3, createBotInstance, walkToLocation, walkToRandomNearLocation, dropUnneededItems, checkInventoryFull, lookForEmptyFarmland, findgrownCrops, checkgrownCrops, harvestAndReplaceCrop, tasks: TASK, } = require('./utils/botUtils')
 const { delay } = require('./utils/utils')
 const { createControlSocket, sendControlMessage, isMaster } = require('./utils/controlUtils')
 
@@ -10,7 +10,8 @@ const config = {
   portTCP: 34534,
 }
 
-var claimedBlocks = []
+const farmConfig = null;	
+global.farmConfig = farmConfig;
 
 var forceTask;
 async function initBots(){
@@ -53,7 +54,6 @@ async function initBots(){
     // }
 }
 
-
 async function initBot(bot){
   console.log(`Joined as ${bot.username} at ${bot.entity.position.x} ${bot.entity.position.y} ${bot.entity.position.z}`)
 
@@ -63,45 +63,48 @@ async function initBot(bot){
   await delay(5000);
 
   while(runLoop){
-    var grownWheat = []
+    var grownCrops = []
     var emptyFarmlands = []
 
-    const botInventoryFull = checkInventoryFull(bot);
-    if(botInventoryFull == true) currentTask = TASK.DROP_ITEMS;
-
-    if(currentTask != TASK.RETURN_HOME && currentTask != TASK.DROP_ITEMS && currentTask != TASK.BAKKIE_DOEN && isMaster() == false){
-      const hasSeeds = bot.inventory.findInventoryItem('wheat_seeds') != null;
-
-      const task = await sendControlMessage('FINDTASK', {username: bot.username, hasSeeds: hasSeeds});
-
-      if(task.data != null){
-        if(task.data.type == 'FARM_CROPS') currentTask = TASK.FARM_CROPS;
-        if(task.data.type == 'SEED_CROPS') currentTask = TASK.SEED_CROPS;
-
-        grownWheat = [task.data.block];
-        emptyFarmlands = [task.data.block];
+    if(global.farmConfig != null){
+      const botInventoryFull = checkInventoryFull(bot);
+      if(botInventoryFull == true) currentTask = TASK.DROP_ITEMS;
+  
+      if(currentTask != TASK.RETURN_HOME && currentTask != TASK.DROP_ITEMS && currentTask != TASK.BAKKIE_DOEN && isMaster() == false){
+        const hasSeeds = bot.inventory.findInventoryItem(global.farmConfig.SEED_ITEM) != null;
+  
+        const task = await sendControlMessage('FINDTASK', {username: bot.username, hasSeeds: hasSeeds});
+  
+        if(task.data != null){
+          if(task.data.type == 'FARM_CROPS') currentTask = TASK.FARM_CROPS;
+          if(task.data.type == 'SEED_CROPS') currentTask = TASK.SEED_CROPS;
+  
+          grownCrops = [task.data.block];
+          emptyFarmlands = [task.data.block];
+        }
       }
+  
+      if(isMaster() == true) currentTask = TASK.TEAMLEIDER;
+  
+      if(forceTask) {
+        currentTask = forceTask;
+        if(forceTask != TASK.BAKKIE_DOEN) forceTask = null;
+      }
+  
+      var taskTimeout = setTimeout(()=>{
+          if(currentTask == TASK.RETURN_HOME) return;
+  
+          console.log(`[${bot.username}] WATCHDOG TIMEOUT [@Task(${currentTask})]`)
+          runLoop = false;
+  
+          setTimeout(() => {
+            console.log(`[${bot.username}] WATCHDOG RESTARTING...`)
+            initBot(bot)
+          }, 1000);
+      }, currentTask == TASK.TEAMLEIDER ? 60000 : 20000)
+    } else {
+      currentTask = TASK.IDLE;
     }
-
-    if(isMaster() == true) currentTask = TASK.TEAMLEIDER;
-
-    if(forceTask) {
-      currentTask = forceTask;
-      if(forceTask != TASK.BAKKIE_DOEN) forceTask = null;
-    }
-
-    var taskTimeout = setTimeout(()=>{
-        if(currentTask == TASK.RETURN_HOME) return;
-
-        console.log(`[${bot.username}] WATCHDOG TIMEOUT [@Task(${currentTask})]`)
-        runLoop = false;
-
-        setTimeout(() => {
-          console.log(`[${bot.username}] WATCHDOG RESTARTING...`)
-          initBot(bot)
-        }, 1000);
-    }, currentTask == TASK.TEAMLEIDER ? 60000 : 20000)
-
     
     switch(currentTask){
       case TASK.TEAMLEIDER:
@@ -134,11 +137,12 @@ async function initBot(bot){
         var randomPoint = randomPoints[Math.floor(Math.random() * randomPoints.length)]
         await walkToLocation(bot, {x: randomPoint.x, z: randomPoint.z})
 
-        var grownWheat = await findGrownWheat(bot, 128, 1000);
-        var emptyFarmlands = lookForEmptyFarmland(bot, 128, 1000);
+        var grownCrops = await findgrownCrops(bot, 128, 1000);
+        console.log(`[${bot.username}] Grown Crops: ${grownCrops.length}`)
+        var emptyFarmlands = await lookForEmptyFarmland(bot, 128, 10);
+        console.log(`[${bot.username}] Empty farmlands: ${emptyFarmlands.length}`)
 
-        await sendControlMessage('MASTERDATA', {grownWheat, emptyFarmlands, username: bot.username})
-        console.log(`[${bot.username}] Grown wheat: ${grownWheat.length}, Empty farmlands: ${emptyFarmlands.length}`)
+        await sendControlMessage('MASTERDATA', {grownCrops, emptyFarmlands, username: bot.username})
 
         console.log(`[${bot.username}] TASK COMPLETE: TEAMLEIDER ${new Date().getTime() - startTime}ms`);
         clearTimeout(taskTimeout)
@@ -197,7 +201,7 @@ async function initBot(bot){
           break;
         }
 
-        const seeds = bot.inventory.findInventoryItem('wheat_seeds')
+        const seeds = bot.inventory.findInventoryItem(global.farmConfig.SEED_ITEM)
         if(seeds == null) {
           console.log(`[${bot.username}] TASK FAILED: SEED_CROPS (${farmland.x}, ${farmland.y}, ${farmland.z})`)
           await sendControlMessage('RELEASEBLOCK', {x: farmland.x, y: farmland.y, z: farmland.z, username: bot.username})
@@ -219,7 +223,7 @@ async function initBot(bot){
         break;
       case TASK.FARM_CROPS:
         var startTime = new Date().getTime();
-        const crop = grownWheat[0]
+        const crop = grownCrops[0]
 
         if(crop == undefined || crop?.x == undefined ) break;
         var blockAbove = bot.blockAt(new Vec3(crop.x, crop.y + 1, crop.z));
@@ -229,10 +233,10 @@ async function initBot(bot){
         console.log(`[${bot.username}] TASK: FARM_CROPS (${crop.x}, ${crop.y}, ${crop.z})`)
         
         await walkToLocation(bot, {x: crop.x, y: crop.y, z: crop.z, range: 0})
-        const isStillGrown = checkGrownWheat(bot, crop)
+        const isStillGrown = checkgrownCrops(bot, crop)
         
         if(isStillGrown){
-            const result = await harvestAndReplaceWheat(bot, crop)
+            const result = await harvestAndReplaceCrop(bot, crop)
             if(result){
                 console.log(`[${bot.username}] TASK COMPLETE: FARM_CROPS (${crop.x}, ${crop.y}, ${crop.z}) in ${new Date().getTime() - startTime}ms`)
             } else {

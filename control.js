@@ -1,5 +1,10 @@
 var net = require('net');
 
+const farmConfig = {
+    SEED_ITEM:'potato',
+    CROP_ITEM:'potatoes',
+};
+
 var controlServerSockets = [];
 var connectedBots = [];
 var claimedBlocks = []
@@ -91,7 +96,7 @@ function handleIncomingMessage(message, socket){
                 console.log(`[${message.data.username}] Assigned as master`);
             }
 
-            sendMessageAck(socket, { messageId: message.id})
+            sendMessageAck(socket, { messageId: message.id, farmConfig})
             break;
         case 'CLAIMBLOCK': //niet nodig ivm FINDBLOCK
             console.log(`[${message.data.username}] Claiming block ${message.data.x}, ${message.data.y}, ${message.data.z}`)
@@ -141,7 +146,7 @@ function handleIncomingMessage(message, socket){
             console.log(`[${message.data.username}] Received master data`)
 
             var tempTasks = [];
-            message.data.grownWheat.forEach(block => { tempTasks.push({type: 'FARM_CROPS', data: block, assigned: null}) });
+            message.data.grownCrops.forEach(block => { tempTasks.push({type: 'FARM_CROPS', data: block, assigned: null}) });
             message.data.emptyFarmlands.forEach(block => { tempTasks.push({type: 'SEED_CROPS', data: block, assigned: null }) });
             //tasks = tasks.filter(task => tempTasks.find(tempTask => tempTask.data.x == task.data.x && tempTask.data.y == task.data.y && tempTask.data.z == task.data.z))
             tempTasks.forEach(tempTask => {
