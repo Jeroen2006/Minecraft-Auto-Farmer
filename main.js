@@ -139,7 +139,11 @@ async function initBot(bot){
 
         var grownCrops = await findgrownCrops(bot, 128, 1000);
         console.log(`[${bot.username}] Grown Crops: ${grownCrops.length}`)
-        var emptyFarmlands = await lookForEmptyFarmland(bot, 128, 10);
+
+
+        var lookForEmptyFarmlandCount = 10;
+        if(grownCrops.length < 50 ) lookForEmptyFarmlandCount = 500;
+        var emptyFarmlands = await lookForEmptyFarmland(bot, 128, lookForEmptyFarmlandCount);
         console.log(`[${bot.username}] Empty farmlands: ${emptyFarmlands.length}`)
 
         await sendControlMessage('MASTERDATA', {grownCrops, emptyFarmlands, username: bot.username})
