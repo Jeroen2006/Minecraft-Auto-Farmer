@@ -246,6 +246,8 @@ async function initBot(bot){
             } else {
                 console.log(`[${bot.username}] TASK FAILED: FARM_CROPS (${crop.x}, ${crop.y}, ${crop.z}) in ${new Date().getTime() - startTime}ms`)
             }
+        } else {
+            console.log(`[${bot.username}] TASK FAILED: FARM_CROPS (${crop.x}, ${crop.y}, ${crop.z}) in ${new Date().getTime() - startTime}ms`)
         }
 
         await sendControlMessage('RELEASEBLOCK', {x: crop.x, y: crop.y, z: crop.z, username: bot.username})

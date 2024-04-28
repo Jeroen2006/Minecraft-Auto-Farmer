@@ -155,7 +155,7 @@ function checkgrownCrops(bot, {x, y, z}) {
 
   const { CROP_ITEM } = global.farmConfig
   const block = bot.blockAt(new Vec3(x, y, z))
-  return CROP_ITEM.includes(block.type) && block._properties.age >= 7
+  return CROP_ITEM.includes(block.name) && block._properties.age >= fullGrownAges[block.name]
 }
 
 function createBotInstance({ config, username, password, id, autoRespawn = true}) {
