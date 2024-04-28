@@ -65,7 +65,9 @@ async function initBot(bot){
     if(botInventoryFull == true) currentTask = TASK.DROP_ITEMS;
 
     if(currentTask != TASK.RETURN_HOME && currentTask != TASK.DROP_ITEMS && currentTask != TASK.BAKKIE_DOEN && isMaster() == false){
-      const task = await sendControlMessage('FINDTASK', {username: bot.username});
+      const hasSeeds = bot.inventory.findInventoryItem('wheat_seeds') != null;
+
+      const task = await sendControlMessage('FINDTASK', {username: bot.username, hasSeeds: hasSeeds});
 
       if(task.data != null){
         if(task.data.type == 'FARM_CROPS') currentTask = TASK.FARM_CROPS;

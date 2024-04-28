@@ -155,8 +155,15 @@ function handleIncomingMessage(message, socket){
         case 'FINDTASK':
             console.log(`[${message.data.username}] Finding task`)
 
+            const hasSeeds = message.data.hasSeeds;
+
             var tasksList = tasks.filter(task => task.assigned == null)
             const botPosition = connectedBots.find(bot => bot.username == message.data.username).pos;
+
+            //if has no seeds, remove seed tasks
+            if(!hasSeeds){
+                tasksList = tasksList.filter(task => task.type != 'SEED_CROPS')
+            }
 
             //remove tasks on blocks that are claimed from tasksList
             tasksList = tasksList.filter(task => isUnclaimedBlock(task.data.x, task.data.y, task.data.z))
