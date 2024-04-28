@@ -13,6 +13,15 @@ const tasks = {
   TEAMLEIDER: 6
 }
 
+const fullGrownAges = {
+  'wheat': 7,
+  'carrots': 7,
+  'potatoes': 7,
+  'beetroots': 3,
+  'nether_wart': 3
+
+}
+
 function checkInventoryFull(bot){
   return bot.inventory.slots.filter((slot) => slot).length >= 36
 }
@@ -24,9 +33,12 @@ function findgrownCrops(botInstance, maxDistance = 32, count = 25){
 
     const { CROP_ITEM } = global.farmConfig
 
+    console.log(CROP_ITEM)
+
     const result = botInstance.findBlocks({
         matching: (block) =>{
-            return CROP_ITEM.includes(block.type) && block._properties.age >= 7
+            //if(block.name != "air") console.log(block)
+            return CROP_ITEM.includes(block.name) && block._properties.age >= fullGrownAges[block.name]
         },
         maxDistance: maxDistance,
         count: count,
