@@ -2,7 +2,7 @@ var net = require('net');
 
 const farmConfig = {
     SEED_ITEM:'potato',
-    CROP_ITEM:'potatoes',
+    CROP_ITEM: ['potatoes', 'carrots', 'wheat', 'beetroot'],
 };
 
 var controlServerSockets = [];

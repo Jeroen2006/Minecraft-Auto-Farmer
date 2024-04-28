@@ -26,7 +26,7 @@ function findgrownCrops(botInstance, maxDistance = 32, count = 25){
 
     const result = botInstance.findBlocks({
         matching: (block) =>{
-            return block.type == mcData.blocksByName[CROP_ITEM].id && block._properties.age >= 7
+            return CROP_ITEM.includes(block.type) && block._properties.age >= 7
         },
         maxDistance: maxDistance,
         count: count,
@@ -64,7 +64,7 @@ function harvestAndReplaceCrop(botInstance, {x, y, z}){
   return new Promise(async res=>{
     const block = botInstance.blockAt(new Vec3(x, y, z))
 
-    const { CROP_ITEM, SEED_ITEM } = global.farmConfig
+    const { SEED_ITEM } = global.farmConfig
 
     await botInstance.dig(block, true);
     await delay(500);
@@ -111,7 +111,7 @@ function walkToRandomNearLocation(botInstance, {allowSprint = false}){
 function dropUnneededItems(botInstance){
   return new Promise(async res=>{
 
-    const { CROP_ITEM, SEED_ITEM } = global.farmConfig
+    const { SEED_ITEM } = global.farmConfig
 
     //drop all unneeded items, except 1 stack of seeds and a diamond hoe
     const itemsToKeep = [SEED_ITEM, 'diamond_hoe']
@@ -141,9 +141,9 @@ function dropUnneededItems(botInstance){
 function checkgrownCrops(bot, {x, y, z}) {
   const mcData = require('minecraft-data')(bot.version)
 
-  const { CROP_ITEM, SEED_ITEM } = global.farmConfig
+  const { CROP_ITEM } = global.farmConfig
   const block = bot.blockAt(new Vec3(x, y, z))
-  return block.type == mcData.blocksByName[CROP_ITEM].id && block._properties.age >= 7
+  return CROP_ITEM.includes(block.type) && block._properties.age >= 7
 }
 
 function createBotInstance({ config, username, password, id, autoRespawn = true}) {
