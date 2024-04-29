@@ -1,17 +1,17 @@
 const TASK = {
-    0: 'IDLE',
-    1: 'RETURN_HOME',
-    2: 'MOVE_TO',
+    IDLE: 0,
+    RETURN_HOME: 1,
+    MOVE_TO: 2,
     toInt,
     toTask
 }
 
 function toTask(int) {
-    return TASK[int];
+    return Object.keys(TASK).find(key => TASK[key] === int);
 }
 
 function toInt(task) {
-    return Object.keys(TASK).find(key => TASK[key] === task);
+    return TASK[task];
 }
 
 module.exports = TASK;
