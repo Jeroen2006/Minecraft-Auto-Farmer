@@ -1,19 +1,17 @@
 {
   "name": "minecraft-auto-farmer",
-  "version": "1.0.0",
-  "main": "index.js",
+  "version": "2.0.0",
+  "description": "A bot that farms for you",
+  "main": "botmain.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1"
   },
-  "author": "",
+  "author": "Jeroen de Kuijper",
   "license": "ISC",
   "dependencies": {
-    "minecraft-data": "^3.64.1",
+    "dotenv": "^16.4.5",
+    "minecraft-data": "^3.65.0",
     "mineflayer": "^4.20.1",
-    "mineflayer-blockfinder": "^0.0.7",
-    "mineflayer-pathfinder": "^2.4.5",
-    "nodemon": "^3.1.0",
-    "prismarine-viewer": "^1.28.0"
-  },
-  "description": ""
+    "mineflayer-pathfinder": "^2.4.5"
+  }
 }

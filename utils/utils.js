@@ -1,7 +1,9 @@
-function delay(ms) {
-    return new Promise(resolve => setTimeout(resolve, ms));
-}
+const Watchdog = require('./watchdog.js');
+const TcpController = require('./tcpController.js');
+const Farmer = require('./farmer.js');
 
 module.exports = {
-    delay
-}
+    Watchdog,
+    TcpController,
+    Farmer,
+};
