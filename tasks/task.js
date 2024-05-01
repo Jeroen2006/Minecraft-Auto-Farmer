@@ -2,6 +2,7 @@ const TASK = {
     IDLE: 0,
     RETURN_HOME: 1,
     MOVE_TO: 2,
+    LEADER: 3,
     toInt,
     toTask
 }

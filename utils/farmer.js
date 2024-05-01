@@ -12,6 +12,14 @@ const fullGrownAges = {
     'nether_wart': 3
 }
 
+const cropToSeed = {
+    'wheat': 'wheat_seeds',
+    'carrots': 'carrot',
+    'potatoes': 'potato',
+    'beetroots': 'beetroot_seeds',
+    'nether_wart': 'nether_wart'
+}
+
 /**
  * Represents a farmer in the Minecraft Auto Farmer application.
  * @class
@@ -20,6 +28,7 @@ class Farmer {
     #password = null;
     #bot = null;
     #tcpController = null;
+    #currentTaskData = null;
 
     /**
      * Represents a Farmer object.
@@ -62,6 +71,7 @@ class Farmer {
         this.reconnect = reconnect;
         this.currentTask = TASK.IDLE;
         this.isMaster = false;
+        this.masterUuid = null;
 
         this.#bot = this._createBotObject({
             username,
@@ -71,13 +81,22 @@ class Farmer {
             server_port
         });
 
-        // this._tcpController = new TcpController({
-        //     ip: this.controller_ip,
-        //     port: this.controller_port,
-        //     reconnect: true,
-        //     connect: true,
-        // });
-         
+        this.#tcpController = new TcpController({
+            ip: this.controller_ip,
+            port: this.controller_port,
+            reconnect: false,
+            connect: true,
+        });
+        
+
+        this.#tcpController.on('connect', () => this.#tcpController.authenticate(this.#bot));
+        this.#tcpController.on('authenticated', (status) => {
+            if(status == true) console.log('Authenticated with controller');
+        });
+        this.#tcpController.on('chosen_master', (masterInfo) => {
+            this.isMaster = masterInfo.isMaster;
+            this.masterUuid = masterInfo.master;
+        });
 
         this.#bot.on('end', this._onDisconnect);
     }
@@ -88,6 +107,66 @@ class Farmer {
      */
     get position(){
         return this.#bot.entity.position;
+    }
+
+    /**
+     * Checks if the bot is joined to the server.
+     *
+     * @returns {boolean} Returns true if the bot is joined, false otherwise.
+     */
+    get isJoined(){
+        return this.#bot.entity != null;
+    }
+
+    cropToSeed(crop){
+        return cropToSeed[crop];
+    }
+
+    breakBlockAt(x, y, z){
+        const block = this.#bot.blockAt(new Vec3(x, y, z));
+        this.#bot.dig(block, true, (err) => {
+            if(err) console.log(err);
+        })
+    }
+
+    placeBlockAt(x, y, z){
+        const block = this.#bot.blockAt(new Vec3(x, y - 1, z));
+        this.#bot.placeBlock(block, new Vec3(0, 1, 0), (err) => {
+            if(err) console.log(err);
+        })
+    }
+
+    hasFullInventory(){
+        return this.#bot.inventory.slots.filter((slot) => slot).length >= 30
+    }
+
+    look(pitch, yaw){
+        this.#bot.look(pitch, yaw);
+    }
+
+    async dropItems(){
+        //drop all items except 1 stack of wheat_seeds, carrot, potato, beetroot_seeds, nether_wart.
+        //Its possible to have more than 1 stack of one of those items, in that case drop all but 1 stack.
+        const items = this.#bot.inventory.items();
+
+        const itemsToDrop = items;
+        const itemsToKeep = ['wheat_seeds', 'carrot', 'potato', 'beetroot_seeds', 'nether_wart'];
+
+        //keep 1 stack of each item
+        for(const item of items){
+            if(itemsToKeep.includes(item.name)){
+                const index = itemsToDrop.indexOf(item);
+                itemsToDrop.splice(index, 1);
+            }
+        }
+
+        for(const item of itemsToDrop){
+            await this.#bot.tossStack(item, (err) => {
+                if(err) console.log(err);
+            });
+        }
+
+        return itemsToDrop.length;
     }
 
     /**
@@ -112,6 +191,22 @@ class Farmer {
             })
 
         })
+    }
+
+    randomXZ(){
+        const x1 = process.env.FARM_B1_POSITION.split(',')[0]
+        const x2 = process.env.FARM_B2_POSITION.split(',')[0]
+        const z1 = process.env.FARM_B1_POSITION.split(',')[2]
+        const z2 = process.env.FARM_B2_POSITION.split(',')[2]
+
+        const x = Math.floor(Math.random() * (Math.abs(x1 - x2) + 1)) + Math.min(x1, x2)
+        const z = Math.floor(Math.random() * (Math.abs(z1 - z2) + 1)) + Math.min(z1, z2)
+
+        return { x, z }
+    }
+
+    sendMasterData(farmland, crops){
+        this.#tcpController.sendMasterData({ farmland, crops });
     }
 
     /**
@@ -139,6 +234,75 @@ class Farmer {
         return this.#bot.blockAt(new Vec3(x, y, z));
     }
 
+    async getTask(){
+        if(this.currentTask != TASK.IDLE) return { type: TASK.toTask(this.currentTask), data: this.#currentTaskData }
+        if(this.isMaster) return { type: TASK.toTask(TASK.LEADER), data: null }
+        
+        const farmableCrops = this.farmableCrops();
+        const position = this.position;
+
+        const controllerAssignedTask = await this.#tcpController.getTask({ farmableCrops, position });
+        return { type: controllerAssignedTask.task.type, data: {
+            id: controllerAssignedTask?.task?.id,
+            position: controllerAssignedTask?.task?.position,
+            crop: controllerAssignedTask?.task?.crop
+        }}
+
+        return { type: TASK.toTask(TASK.IDLE), data: null }
+    }
+
+    completedTask(id){
+        this.#tcpController.completedTask(id);
+    }
+
+    /**
+     * Sleeps for a specified amount of time.
+     * @param {number} ms - The number of milliseconds to sleep.
+     * @returns {Promise<void>} - A promise that resolves after the specified time.
+     */
+    async sleep(ms){
+        return new Promise(resolve => {
+            setTimeout(resolve, ms);
+        })
+    }
+
+    /**
+     * Equips the specified item in the bot's hand.
+     * @param {string} itemName - The name of the item to equip.
+     * @returns {boolean} - Returns true if the item was successfully equipped, false otherwise.
+     */
+    async equipItem(itemName){
+        const item = this.#bot.inventory.items().find(item => item.name === itemName)
+        if(item){
+            this.#bot.equip(item, 'hand')
+            return true;
+        }
+
+        return false;
+    }
+
+    /**
+     * Checks if the bot has a specific item in its inventory.
+     * @param {string} itemName - The name of the item to check for.
+     * @returns {boolean} - Returns true if the bot has the item, false otherwise.
+     */
+    hasItem(itemName){
+        return this.#bot.inventory.items().find(item => item.name === itemName) !== undefined;
+    }
+
+    /**
+     * Retrieves a list of farmable crops based on the items available.
+     * @returns {string[]} An array of farmable crop names.
+     */
+    farmableCrops(){
+        var crops = [];
+        if(this.hasItem('wheat_seeds')) crops.push('wheat');
+        if(this.hasItem('carrot')) crops.push('carrots');
+        if(this.hasItem('potato')) crops.push('potatoes');
+        if(this.hasItem('beetroot_seeds')) crops.push('beetroots');
+        if(this.hasItem('nether_wart')) crops.push('nether_wart');
+        return crops;
+    }
 
     /**
      * Finds grown crops within a specified distance from the bot's position.
@@ -147,7 +311,7 @@ class Farmer {
      * @param {string|string[]} [cropType='wheat'] - The type(s) of crops to search for.
      * @returns {Crop[]} An array of Crop objects representing the found grown crops.
      */
-    async findGrownCrops(maxDistance = 32, count = 1, cropType = 'wheat'){
+    async findGrownCrops(maxDistance = 32, count = 1, cropType = ['wheat', 'carrots', 'potatoes', 'beetroots']){
         var cropTypes = cropType;
         if(typeof cropType === 'string') cropTypes = [cropType];
 
